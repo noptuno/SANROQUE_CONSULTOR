@@ -146,7 +146,7 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
             }
         });
 
-
+//ULTIMO
         mEloPeripheralManager = new EloPeripheralManager(this, new EloPeripheralEventListener() {
             @Override
             public void onEvent(int i, String s) {
