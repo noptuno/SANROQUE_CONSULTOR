@@ -147,6 +147,8 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
         });
 
 //ULTIMO
+
+        /*
         mEloPeripheralManager = new EloPeripheralManager(this, new EloPeripheralEventListener() {
             @Override
             public void onEvent(int i, String s) {
@@ -167,6 +169,8 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
             }
 
         });
+
+        */
 
 
         btnon.setOnClickListener(new View.OnClickListener() {
@@ -236,7 +240,7 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
         m_ip = ipp;
         sucursal = succ;
 
-        if (m_ip.equals("11") || sucursal.equals("11") || configurado.equals("NO")){
+        if (m_ip.equals("11") || configurado.equals("NO")){
 
             SharedPreferences.Editor editor = pref.edit();
             editor.putString("IP", "11");
