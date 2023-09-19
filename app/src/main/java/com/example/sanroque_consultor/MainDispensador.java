@@ -87,7 +87,7 @@ public class MainDispensador extends AppCompatActivity {
             }
         });
 
-      context = getApplicationContext();
+        context = getApplicationContext();
 
 
 

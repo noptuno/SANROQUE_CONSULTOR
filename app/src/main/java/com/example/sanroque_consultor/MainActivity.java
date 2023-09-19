@@ -15,6 +15,11 @@ import android.widget.Toast;
 
 import com.example.sanroque_consultor.dispensador.Configuracion.DMRPrintSettings;
 import com.example.sanroque_consultor.dispensador.Configuracion.DOPrintMainActivity;
+import com.zebra.scannercontrol.DCSSDKDefs;
+import com.zebra.scannercontrol.DCSScannerInfo;
+import com.zebra.scannercontrol.FirmwareUpdateEvent;
+import com.zebra.scannercontrol.IDcsSdkApiDelegate;
+import com.zebra.scannercontrol.SDKHandler;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -45,10 +50,15 @@ public class MainActivity extends AppCompatActivity {
     private int m_configurado;
     String fechainicio;
 
+    public static SDKHandler sdkHandler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+
         txtmac = findViewById(R.id.txtmacmostrar);
         iniciarconsultor = findViewById(R.id.btniniciar);
         iniciardis = findViewById(R.id.btniniciardispen);
@@ -59,6 +69,8 @@ public class MainActivity extends AppCompatActivity {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         Date date2 = new Date();
         fechainicio = dateFormat.format(date2);
+
+
 
 
 
@@ -118,6 +130,8 @@ public class MainActivity extends AppCompatActivity {
             editor.putString("CONFIGURADO", "SI");
             editor.apply();
             startActivity(intent2);
+
+
         }
 
             }
@@ -255,4 +269,5 @@ public class MainActivity extends AppCompatActivity {
         }
         return ret;
     }
+
 }
