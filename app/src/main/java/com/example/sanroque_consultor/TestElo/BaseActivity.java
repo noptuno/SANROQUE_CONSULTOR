@@ -30,8 +30,6 @@ public class BaseActivity extends AppCompatActivity implements ScannerAppEngine,
 
     private static ArrayList<DCSScannerInfo> mScannerInfoList;
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,30 +42,19 @@ public class BaseActivity extends AppCompatActivity implements ScannerAppEngine,
         }
         Application.sdkHandler.dcssdkSetDelegate(this);
         initializeDcsSdkWithAppSettings();
+
         int notifications_mask = 0;
         notifications_mask |= (DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_BARCODE.value);
         Application.sdkHandler.dcssdkSubsribeForEvents(notifications_mask);
 
-    }
-    private Handler initializeHandler() {
-        if (Application.globalMsgHandler != null)
-            return Application.globalMsgHandler;
-        return null;
-    }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Application.sdkHandler.dcssdkSetDelegate(this);
-    }
 
+    }
 
 
     @Override
     public void dcssdkEventScannerAppeared(DCSScannerInfo dcsScannerInfo) {
 
-
-        Log.e("RECIBIENDO2","");
     }
 
     @Override
@@ -87,9 +74,6 @@ public class BaseActivity extends AppCompatActivity implements ScannerAppEngine,
 
     @Override
     public void dcssdkEventBarcode(byte[] bytes, int i, int i1) {
-
-        String barcodeText = new String(bytes);
-        Log.e("aca",barcodeText);
 
     }
 
