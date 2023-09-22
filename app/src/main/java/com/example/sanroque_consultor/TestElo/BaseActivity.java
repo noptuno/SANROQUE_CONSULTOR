@@ -47,8 +47,6 @@ public class BaseActivity extends AppCompatActivity implements ScannerAppEngine,
         notifications_mask |= (DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_BARCODE.value);
         Application.sdkHandler.dcssdkSubsribeForEvents(notifications_mask);
 
-
-
     }
 
 
@@ -111,6 +109,8 @@ public class BaseActivity extends AppCompatActivity implements ScannerAppEngine,
 
     @Override
     public void showMessageBox(String message) {
+
+        Log.e("showMessageBox","showMessageBox");
 
     }
 
@@ -180,7 +180,7 @@ public class BaseActivity extends AppCompatActivity implements ScannerAppEngine,
 
     @Override
     public void raiseDeviceNotificationsIfNeeded() {
-
+        Log.e("raiseDeviceNotificationsIfNeeded","raiseDeviceNotificationsIfNeeded");
     }
 
     @Override
@@ -303,5 +303,7 @@ public class BaseActivity extends AppCompatActivity implements ScannerAppEngine,
                     break;
             }
         }
+
+
     };
 }

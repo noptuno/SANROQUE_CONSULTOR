@@ -4,7 +4,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,12 +16,10 @@ import com.example.sanroque_consultor.R;
 import com.zebra.scannercontrol.DCSSDKDefs;
 import com.zebra.scannercontrol.DCSScannerInfo;
 
-
-
 import java.util.ArrayList;
 
 public class HomeActivity extends BaseActivity {
-
+    private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
     static  AvailableScanner curAvailableScanner=null;
 
     private static ArrayList<DCSScannerInfo> mSNAPIList=new ArrayList<DCSScannerInfo>();
@@ -29,21 +29,16 @@ public class HomeActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lector_test);
 
-        IntentFilter filter = new IntentFilter("com.android.example.USB_PERMISSION");
+        IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
         registerReceiver(usbPermissionReceiver, filter);
-
-
         mandarSolicitud();
-
+        FindLector();
     }
-    private void mandarSolicitud(){
 
+    private void mandarSolicitud(){
         Application.sdkHandler.dcssdkEnableAvailableScannersDetection(true);
         Application.sdkHandler.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_SNAPI);
-        Application.sdkHandler.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_USB_CDC);
-
     }
-
 
     private BroadcastReceiver usbPermissionReceiver = new BroadcastReceiver() {
         @Override
@@ -51,21 +46,21 @@ public class HomeActivity extends BaseActivity {
             String action = intent.getAction();
 
             Log.e("recibidousb",action);
+            synchronized(this) {
+                UsbDevice device = (UsbDevice) intent.getParcelableExtra("device");
+                if (intent.getBooleanExtra("permission", false)) {
+                    if (device != null) {
+                        Log.e("usb", "acepto");
 
-            UsbDevice device = (UsbDevice)intent.getParcelableExtra("device");
-            if (intent.getBooleanExtra("permission", false)) {
-                if (device != null) {
-                    Log.e("usb","acepto");
-                    FindLector();
+                        FindLector();
+                    }
+                } else {
+                    Log.e("usb", "cancelo");
+                    mandarSolicitud();
                 }
-            } else {
-                Log.e("usb","cancelo");
-                mandarSolicitud();
             }
-
         }
     };
-
 
     @Override
     public void dcssdkEventBarcode(byte[] bytes, int i, int i1) {
@@ -83,9 +78,11 @@ public class HomeActivity extends BaseActivity {
 
         updateScannersList();
         for(DCSScannerInfo device:getActualScannersList()){
+
             if(device.getConnectionType() == DCSSDKDefs.DCSSDK_CONN_TYPES.DCSSDK_CONNTYPE_USB_SNAPI){
                 scanner = device;
             }
+
         }
 
         if (scanner!=null){

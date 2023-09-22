@@ -2,10 +2,13 @@ package com.example.sanroque_consultor;
 
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.hardware.usb.UsbDevice;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -46,9 +49,15 @@ import com.elotouch.library.EloPeripheralEventListener;
 import com.elotouch.library.EloPeripheralManager;
 import com.example.sanroque_consultor.Clases.Producto;
 import com.example.sanroque_consultor.ParsearXML.ParserXmlElo;
+import com.example.sanroque_consultor.TestElo.Application;
+import com.example.sanroque_consultor.TestElo.BaseActivity;
+import com.example.sanroque_consultor.TestElo.CustomProgressDialog;
+import com.example.sanroque_consultor.TestElo.HomeActivity;
 import com.example.sanroque_consultor.apiadapter.ActivityMonitor;
 import com.example.sanroque_consultor.apiadapter.ApiAdapter;
 import com.example.sanroque_consultor.apiadapter.ApiAdapterFactory;
+import com.zebra.scannercontrol.DCSSDKDefs;
+import com.zebra.scannercontrol.DCSScannerInfo;
 
 
 import org.json.JSONException;
@@ -64,6 +73,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IllegalFormatCodePointException;
 import java.util.Map;
@@ -90,7 +100,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 
-public class ConsultorPrecioActivity extends AppCompatActivity {
+public class ConsultorPrecioActivity extends BaseActivity {
     private static final boolean AUTO_HIDE = true;
     private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
     private static final int UI_ANIMATION_DELAY = 300;
@@ -108,6 +118,7 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
     private boolean lectorHabilitado = false;
     private TextView txtdescripcion1, txtdescripcion2, txtprecioproducto, txtcodigoproducto, txtcodigobarraproducto;
     ActionBar actionBar;
+    boolean leyendo = false;
     ConstraintLayout constrain;
     LinearLayout linearprecio;
     ImageView imgescaner;
@@ -118,7 +129,7 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
     private ApiAdapter apiAdapter;
     private TextView txtversion;
 
-    private EloPeripheralManager mEloPeripheralManager;
+  //  private EloPeripheralManager mEloPeripheralManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,7 +157,10 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
             }
         });
 
-//ULTIMO
+        //esto se activa para las version 4.0
+        //22/09/2023
+
+        /*
         mEloPeripheralManager = new EloPeripheralManager(this, new EloPeripheralEventListener() {
             @Override
             public void onEvent(int i, String s) {
@@ -169,15 +183,18 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
         });
 
 
+ */
+
         btnon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
               //  apiAdapter.setBarCodeReaderEnabled(true);
 
-                mEloPeripheralManager.activeBcr();
-                mEloPeripheralManager.enableInputEvents();
+                //22/09/2023
+             //   mEloPeripheralManager.activeBcr();
+            //    mEloPeripheralManager.enableInputEvents();
                 //turnOnLaser();
-                Log.e("ON", mEloPeripheralManager.toString());
+             //   Log.e("ON", mEloPeripheralManager.toString());
 
             }
         });
@@ -190,10 +207,12 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
                 // delayedHide(AUTO_HIDE_DELAY_MILLIS);
                 // EnableDialog(true,"mostrando",false);
 
-                mEloPeripheralManager.disactiveBcr();
-                mEloPeripheralManager.disableInputEvents();
 
-                Log.e("OFF", mEloPeripheralManager.toString());
+                //22/09/2023
+              //  mEloPeripheralManager.disactiveBcr();
+              //  mEloPeripheralManager.disableInputEvents();
+
+             //   Log.e("OFF", mEloPeripheralManager.toString());
 
             }
         });
@@ -219,9 +238,16 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
 
       //  inventory();
 
+//22/09/2023 new lector
 
+        IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
+        registerReceiver(usbPermissionReceiver, filter);
+        mandarSolicitud();
+        FindLector();
 
     }
+    private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
+
 
     public String getVersionName(){
         return BuildConfig.VERSION_NAME;
@@ -236,11 +262,10 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
         m_ip = ipp;
         sucursal = succ;
 
-        if (m_ip.equals("11") || sucursal.equals("11") || configurado.equals("NO")){
-
+        if (configurado.equals("NO")){
             SharedPreferences.Editor editor = pref.edit();
-            editor.putString("IP", "11");
-            editor.putString("SUC", "11");
+            editor.putString("IP", "");
+            editor.putString("SUC", "");
             editor.putString("CONFIGURADO", "NO");
             editor.apply();
             finish();
@@ -257,32 +282,29 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-       // apiAdapter.getActivityMonitor().onActivityEvent(ActivityMonitor.EVENT_ON_RESUME);
 
-        //updatePaperStatus();
 
-        mEloPeripheralManager.OnResume();
+      //  mEloPeripheralManager.OnResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-      //  apiAdapter.getActivityMonitor().onActivityEvent(ActivityMonitor.EVENT_ON_PAUSE);
 
-        mEloPeripheralManager.OnPause();
+      //  mEloPeripheralManager.OnPause();
 
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-      //  apiAdapter.getActivityMonitor().onActivityEvent(ActivityMonitor.EVENT_ON_START);
+
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-       // apiAdapter.getActivityMonitor().onActivityEvent(ActivityMonitor.EVENT_ON_STOP);
+
     }
 
     public void turnBcrOff() {
@@ -365,34 +387,6 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
     }
 
 
-
-/*
-    private BarCodeReader.BarcodeReadCallback callback = new BarCodeReader.BarcodeReadCallback() {
-        @Override
-        public void onBarcodeRead(byte[] bytes) {
-            String output;
-            try {
-                output = new String(bytes, "US-ASCII");
-            } catch (UnsupportedEncodingException e) {
-                output = "--UnReadable--";
-            }
-            final String outputCopy = output;
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Log.e("leyendo", "4");
-                    conexionApi2023(outputCopy);
-
-                }
-            });
-
-        }
-    };
-*/
-
-
-
-
     private RequestQueue requestQueue;
     void conexionApi2023(final String codigoverificar) {
 
@@ -423,9 +417,8 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
 
                             DisplayPrintingStatusMessage("Hubo un problema con los datos..");
                             EnableDialog(false, "limpiando", false);
-
-
                         }
+                        leyendo=false;
                     }
                 },
                 new com.android.volley.Response.ErrorListener() {
@@ -434,8 +427,7 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
 
                         DisplayPrintingStatusMessage("Error con la conexion Wifi.. Reintentar");
                         EnableDialog(false, "limpiando", false);
-
-
+                        leyendo=false;
 
                     }
                 })
@@ -474,9 +466,7 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
         requestQueue.add(request);
 
 
-
     }
-
 
     void hidebarras() {
         constrain.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
@@ -588,7 +578,6 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
 
     private void mostrar_datos_view(final Producto a) {
 
-
         m_handler.post(new Runnable() {
             public void run() {
 
@@ -682,6 +671,110 @@ public class ConsultorPrecioActivity extends AppCompatActivity {
         if (!USE_SDK_API) {
             Log.i(TAG, "Loading so");
             System.loadLibrary("barcodereaderjni");
+        }
+    }
+
+    //22/09/2023 new lector
+    private void mandarSolicitud(){
+        Application.sdkHandler.dcssdkEnableAvailableScannersDetection(true);
+        Application.sdkHandler.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_SNAPI);
+    }
+
+    private BroadcastReceiver usbPermissionReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            Log.e("recibidousb",action);
+            synchronized(this) {
+                UsbDevice device = (UsbDevice) intent.getParcelableExtra("device");
+                if (intent.getBooleanExtra("permission", false)) {
+                    if (device != null) {
+                        Log.e("usb", "acepto");
+
+                        FindLector();
+                    }
+                } else {
+                    Log.e("usb", "cancelo");
+                    mandarSolicitud();
+                }
+            }
+        }
+    };
+
+    @Override
+    public void dcssdkEventBarcode(byte[] bytes, int i, int i1) {
+
+        String barcodeText = new String(bytes);
+
+        if (leyendo){
+        }else {
+            leyendo=true;
+            conexionApi2023(barcodeText);
+        }
+
+
+    }
+    private DCSScannerInfo scanner;
+    static MyAsyncTask cmdExecTask=null;
+
+    private static ArrayList<IScannerAppEngineDevConnectionsDelegate> mDevConnDelegates = new ArrayList<IScannerAppEngineDevConnectionsDelegate>();
+
+    private void FindLector() {
+
+        updateScannersList();
+        for(DCSScannerInfo device:getActualScannersList()){
+
+            if(device.getConnectionType() == DCSSDKDefs.DCSSDK_CONN_TYPES.DCSSDK_CONNTYPE_USB_SNAPI){
+                scanner = device;
+            }
+
+        }
+
+        if (scanner!=null){
+            cmdExecTask = new MyAsyncTask(scanner);
+            cmdExecTask.execute();
+        }
+    }
+
+    private static CustomProgressDialog progressDialog;
+
+    private class MyAsyncTask extends AsyncTask<Void,DCSScannerInfo,Boolean> {
+        private DCSScannerInfo  scanner;
+        public MyAsyncTask(DCSScannerInfo scn){
+            this.scanner=scn;
+        }
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            if(!isFinishing()) {
+                progressDialog = new CustomProgressDialog(ConsultorPrecioActivity.this, "Connecting To scanner. Please Wait...");
+                progressDialog.setCancelable(false);
+                progressDialog.show();
+            }
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            DCSSDKDefs.DCSSDK_RESULT result =connect(scanner.getScannerID());
+            if(result== DCSSDKDefs.DCSSDK_RESULT.DCSSDK_RESULT_SUCCESS){
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Boolean b) {
+            super.onPostExecute(b);
+            if(!isFinishing()) {
+                if (progressDialog != null && progressDialog.isShowing())
+                    progressDialog.dismiss();
+            }
+            if (!b) {
+                Toast.makeText(getApplicationContext(), "Error No hay lector", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 }

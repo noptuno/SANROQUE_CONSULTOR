@@ -120,18 +120,15 @@ public class MainActivity extends AppCompatActivity {
         iniciarconsultor.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
         if (!ip.getText().equals("") && !suc.getText().equals("")){
-
             Intent intent2 = new Intent(MainActivity.this, ConsultorPrecioActivity.class);
-
             SharedPreferences.Editor editor = pref.edit();
             editor.putString("IP", ip.getText().toString());
             editor.putString("SUC", suc.getText().toString());
             editor.putString("CONFIGURADO", "SI");
             editor.apply();
             startActivity(intent2);
-
-
         }
 
             }
